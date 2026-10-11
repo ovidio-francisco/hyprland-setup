@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+win_count=$(hyprctl activeworkspace -j | jq -r '.windows')
+# cur_ws=$(hyprctl activeworkspace -j | jq -r '.id')
+
+
+# if [[ "$cur_ws" -eq 1 && "$win_count" -eq 0 ]]; then
+if [[ "$win_count" -eq 0 ]]; then
+	exit 0;
+fi
+
+mapfile -t workspaces < <( hyprctl workspaces -j | jq -r '.[].id' | sort -n)
+
+
+# 1 2 4
+
+# 1 2 3 4
+
+# 1 1
+# 2 3
+# 3 4
+
+next=1
+
+for ws in "${workspaces[@]}"; do
+
+	[[ "$next" -lt "$ws" ]] && break;
+
+	next=$((next+1))
+
+done
+
+
+
+# if [[ "$win_count" -eq 0 ]]; then
+	# hyprctl dispatch "hl.dsp.workspace.change_id({ workspace = \"$cur_ws\", id = $next })"
+# else
+	hyprctl dispatch "hl.dsp.focus({ workspace = \"$next\" })"
+
+# fi
+
+
+

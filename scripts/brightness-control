@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MIN_PERCENT=1
+STEP_PERCENT=5
+
+case "${1:-}" in
+    up|down) direction=$1 ;;
+    *) exit ;;
+esac
+
+max=$(brightnessctl -e4 -n2 m)
+current=$(brightnessctl -e4 -n2 g)
+step=$((max * STEP_PERCENT / 100))
+min=$((max * MIN_PERCENT / 100))
+
+(( step < 1 )) && step=1
+(( min < 1 )) && min=1
+
+if [[ $direction == up ]]; then
+    target=$((current + step))
+    (( target > max )) && target=$max
+else
+    target=$((current - step))
+    (( target < min )) && target=$min
+fi
+
+brightnessctl -e4 -n2 set "$target"
+
+current=$(brightnessctl -e4 -n2 g)
+percent=$((current * 100 / max))
+
+notify-send \
+    -h "int:value:$percent" \
+    -h "string:x-canonical-private-synchronous:brightness" \
+    -- "Brightness ${percent}%"

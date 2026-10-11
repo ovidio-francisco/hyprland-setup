@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+current_windows=$(hyprctl activeworkspace -j | jq -r '.windows')
+
+if [[ "$current_windows" -eq 0 ]]; then
+    total=$(hyprctl workspaces -j | jq 'length')
+
+    if [[ "$total" -gt 1 ]]; then
+        hyprctl dispatch 'hl.dsp.focus({ workspace = "1" })'
+    fi
+
+    exit 0
+fi
+
+number=$(
+    hyprctl workspaces -j |
+        jq -r '.[].id | select(. > 0)' |
+        sort -n |
+        awk 'BEGIN { n = 1 } $1 == n { n++ } END { print n }'
+)
+
+hyprctl dispatch "hl.dsp.focus({ workspace = \"$number\" })"
+
+
+
+
+
+
+
+# #!/usr/bin/env bash
+# set -euo pipefail
+#
+# workspaces=$(hyprctl workspaces -j)
+# current_windows=$(hyprctl activeworkspace -j | jq -r '.windows')
+#
+# if [[ "$current_windows" -eq 0 ]]; then
+#     total=$(jq 'length' <<< "$workspaces")
+#     empty_count=$(jq '[.[] | select(.windows == 0)] | length' <<< "$workspaces")
+#
+#     if [[ "$total" -gt 1 && "$empty_count" -eq 1 ]]; then
+#         hyprctl dispatch 'hl.dsp.focus({ workspace = "1" })'
+#     fi
+#
+#     exit 0
+# fi
+#
+# number=$(
+#     jq -r '.[].id | select(. > 0)' <<< "$workspaces" |
+#         sort -n |
+#         awk 'BEGIN { n = 1 } $1 == n { n++ } END { print n }'
+# )
+#
+# hyprctl dispatch "hl.dsp.focus({ workspace = \"$number\" })"
+
+
+
+
+
+
+
+
+# #!/usr/bin/env bash
+# set -euo pipefail
+#
+# windows=$(hyprctl activeworkspace -j | jq -r '.windows')
+#
+# # Stay put if the current workspace is empty.
+# if [[ "$windows" -eq 0 ]]; then
+#     exit 0
+# fi
+#
+# number=$(
+#     hyprctl workspaces -j |
+#         jq -r '.[].id | select(. > 0)' |
+#         sort -n |
+#         awk 'BEGIN { n = 1 } $1 == n { n++ } END { print n }'
+# )
+#
+# hyprctl dispatch "hl.dsp.focus({ workspace = \"$number\" })"
+#
+
+
+
+
+# #!/usr/bin/env bash
+#
+# if hyprctl activeworkspace -j | jq -e '.windows == 0' >/dev/null; then
+#     exit 0
+# fi
+#
+# hyprctl dispatch 'hl.dsp.focus({ workspace = "emptyn" })'

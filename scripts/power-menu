@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Rofi power menu for Hyprland.
+
+# Set the confirmation mode on the command line:
+#   powermenu.sh confirm      Ask before power/session actions (default).
+#   powermenu.sh no-confirm   Run actions immediately.
+
+readonly DEFAULT_CONFIRM_MODE="confirm"
+readonly CONFIRM_MODE="${1:-$DEFAULT_CONFIRM_MODE}"
+
+case "$CONFIRM_MODE" in
+    confirm|no-confirm)
+        ;;
+    -h|--help)
+        printf 'Usage: %s [confirm|no-confirm]\n' "${0##*/}"
+        exit 0
+        ;;
+    *)
+        printf 'Usage: %s [confirm|no-confirm]\n' "${0##*/}" >&2
+        exit 2
+        ;;
+esac
+
+if [[ "$#" -gt 1 ]]; then
+    printf 'Usage: %s [confirm|no-confirm]\n' "${0##*/}" >&2
+    exit 2
+fi
+
+# Menu labels: change these constants to rename or renumber options.
+readonly OPT_POWER_OFF="1  Power off"
+readonly OPT_REBOOT="2  Reboot"
+readonly OPT_LOG_OUT="3  Log out"
+readonly OPT_HALT="4  Halt"
+readonly OPT_LOCK="5  Lock"
+readonly OPT_SUSPEND="6  Suspend"
+readonly OPT_HIBERNATE="7  Hibernate"
+readonly OPT_CANCEL="8  Cancel"
+
+readonly CONFIRM_YES="1  Yes"
+readonly CONFIRM_NO="0  No"
+
+readonly -a MENU_OPTIONS=(
+    "$OPT_POWER_OFF"
+	"$OPT_REBOOT"
+	"$OPT_LOG_OUT"
+    "$OPT_HALT"
+    "$OPT_LOCK"
+    "$OPT_SUSPEND"
+    "$OPT_HIBERNATE"
+    "$OPT_CANCEL"
+)
+
+if ! command -v rofi >/dev/null 2>&1; then
+    printf 'rofi was not found. Install Rofi first.\n' >&2
+    exit 1
+fi
+
+choice=$(printf '%s\n' "${MENU_OPTIONS[@]}" | rofi -dmenu -theme ojf -i -p 'Power' -theme-str 'element-text { font: "monospace 12"; }')
+
+[[ -z "$choice" || "$choice" == "$OPT_CANCEL" ]] && exit 0
+
+
+confirm() {
+    local action="$1"
+    local answer
+    answer=$(printf '%s\n' "$CONFIRM_YES" "$CONFIRM_NO" |
+		rofi -dmenu -theme ojf -i -p "Sure?")
+    [[ "$answer" == "$CONFIRM_YES" ]]
+}
+
+run_action() {
+    local action="$1"
+    shift
+
+    if [[ "$CONFIRM_MODE" == "confirm" ]] && ! confirm "$action"; then
+        return 0
+    fi
+
+    "$@"
+}
+
+case "$choice" in
+    "$OPT_POWER_OFF")
+        run_action "power off" systemctl poweroff
+        ;;
+    "$OPT_HALT")
+        run_action "halt" systemctl halt
+        ;;
+    "$OPT_REBOOT")
+        run_action "reboot" systemctl reboot
+        ;;
+    "$OPT_LOG_OUT")
+        if command -v hyprctl >/dev/null 2>&1; then
+            run_action "log out" hyprctl dispatch 'hl.dsp.exit()'
+        else
+            printf 'hyprctl was not found; this menu expects a Hyprland session.\n' >&2
+            exit 1
+        fi
+        ;;
+    "$OPT_LOCK")
+        if command -v hyprlock >/dev/null 2>&1; then
+            hyprlock
+        elif command -v swaylock >/dev/null 2>&1; then
+            swaylock
+        else
+            printf 'No screen locker found. Install hyprlock or swaylock.\n' >&2
+            exit 1
+        fi
+        ;;
+    "$OPT_SUSPEND")
+        run_action "suspend" systemctl suspend
+        ;;
+    "$OPT_HIBERNATE")
+        run_action "hibernate" systemctl hibernate
+        ;;
+esac
+
