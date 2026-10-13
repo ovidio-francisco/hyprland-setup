@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+cclip_bin="$HOME/.local/bin/cclip"
+
+selection=$(
+    "$cclip_bin" list rowid,mime_type,preview |
+        rofi -dmenu -i -p "Clipboard" -theme ojf -display-columns 3
+) || exit 0
+
+[ -n "$selection" ] || exit 0
+
+id=$(printf '%s\n' "$selection" | cut -f1)
+"$cclip_bin" copy "$id"
+
+
+# Install `cclip` on Debian
+
+# 1. **Install the build tools and libraries** `cclip` needs:
+
+   # sudo apt update
+   # sudo apt install git meson ninja-build build-essential pkg-config \
+	   # libwayland-dev libwayland-bin wayland-protocols \
+	   # libsqlite3-dev libxxhash-dev
+
+# 2. **Download and compile the source in `/tmp`**, so it won’t leave a `src` folder in your home directory:
+
+   # git clone https://github.com/heather7283/cclip.git /tmp/cclip
+   # cd /tmp/cclip
+   # meson setup --buildtype=release --prefix="$HOME/.local" build
+   # meson compile -C build
+   # meson install -C build
+
+   # This installs `cclip` and `cclipd` in `~/.local/bin`.
+
+# 3. **Start the clipboard history daemon with Hyprland.** Add this to your Lua startup:
+
+   # hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/png' -t 'image/*' -t 'text/plain;charset=utf-8' -t 'text/*'")
+
+# 4. **Point your Rofi history script to the installed `cclip` binary:**
+
+   # cclip_bin="$HOME/.local/bin/cclip"
+
+# 5. **Remove the temporary source files** after confirming everything works:
+
+   # rm -rf /tmp/cclip
+
+

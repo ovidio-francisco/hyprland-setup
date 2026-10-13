@@ -9,7 +9,8 @@
 
 
 local scripts_path = "~/.config/hypr/scripts/"
-
+local NORMAL_GAPS_IN  = 4
+local NORMAL_GAPS_OUT = 8
 
 
 hl.config({
@@ -25,6 +26,40 @@ hl.config({
     },
 })
 
+
+
+hl.on("window.open", function(w)
+    if w.class == "google-chrome" then
+        hl.workspace_rule({
+            workspace = tostring(w.workspace.id),
+            gaps_in = 0,
+            gaps_out = 0,
+        })
+    end
+end)
+
+
+-- hl.on("window.open_early", function(w)
+--     if w.class ~= "google-chrome" then return end
+--
+--     hl.workspace_rule({
+--         workspace = tostring(w.workspace.id),
+--         gaps_in = 0,
+--         gaps_out = 0,
+--     })
+-- end)
+--
+
+
+hl.on("window.close", function(w)
+    if w.class == "google-chrome" then
+        hl.workspace_rule({
+            workspace = tostring(w.workspace.id),
+            gaps_in = NORMAL_GAPS_IN,
+            gaps_out = NORMAL_GAPS_OUT,
+        })
+    end
+end)
 
 
 hl.bind("CTRL + space",     hl.dsp.exec_cmd(scripts_path .. "set-next-keyboard-layout"))
@@ -49,6 +84,12 @@ hl.bind("ALT + SHIFT + j",  hl.dsp.window.swap({ direction = "down" }))
 hl.bind("ALT + SHIFT + k",  hl.dsp.window.swap({ direction = "up" }))
 hl.bind("ALT + SHIFT + l",  hl.dsp.window.swap({ direction = "right" }))
 
+
+
+hl.bind("ALT + p", hl.dsp.exec_cmd(scripts_path .. "rofi-clip-history"))
+hl.bind("ALT + r", hl.dsp.exec_cmd(scripts_path .. "rofi-recent-files"))
+
+
 ---------------------
 ---- MY PROGRAMS ----
 ---------------------
@@ -67,8 +108,11 @@ local menu        = "hyprlauncher"
 hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("waybar")
-	hl.exec_cmd("wl-clip-persist --clipboard regular")
 	hl.exec_cmd("brightnessctl -n2 set 25%")
+	hl.exec_cmd("wl-clip-persist --clipboard regular")
+    -- hl.exec_cmd("wl-paste --type text --watch cliphist store")
+	-- hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/png' -t 'image/*' -t 'text/plain;charset=utf-8' -t 'text/*'")
+	hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/*' -t 'text/*'")
 end)
 
 
@@ -79,8 +123,8 @@ end)
 
 hl.config({
     general = {
-        gaps_in  = 4,
-        gaps_out = 8,
+        gaps_in  = NORMAL_GAPS_IN,
+        gaps_out = NORMAL_GAPS_OUT,
 
         border_size = 0,
 

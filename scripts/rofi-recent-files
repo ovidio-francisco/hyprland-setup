@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+
+data_dir = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+xbel = data_dir / "recently-used.xbel"
+
+if not xbel.exists():
+    sys.exit(0)
+
+try:
+    root = ET.parse(xbel).getroot()
+except ET.ParseError:
+    sys.exit(0)
+
+entries = []
+seen = set()
+
+for bookmark in root.findall(".//{*}bookmark"):
+    uri = bookmark.get("href", "")
+    parsed = urlparse(uri)
+
+    if parsed.scheme != "file" or uri in seen:
+        continue
+
+    path = Path(unquote(parsed.path))
+    if not path.exists():
+        continue
+
+    seen.add(uri)
+    entries.append((bookmark.get("modified", ""), uri, path))
+
+entries.sort(key=lambda entry: entry[0], reverse=True)
+
+if not entries:
+    sys.exit(0)
+
+labels = [
+    f"{path.name}  —  {path.parent}".replace("\n", " ")
+    for _, _, path in entries
+]
+
+selection = subprocess.run(
+    ["rofi", 
+     "-dmenu", 
+     "-i", "-p", 
+     "Recent files", 
+     "-theme", "ojf", 
+     "-format", "i"],
+    input="\n".join(labels),
+    text=True,
+    capture_output=True,
+)
+
+if selection.returncode != 0 or not selection.stdout.strip():
+    sys.exit(0)
+
+try:
+    index = int(selection.stdout.strip())
+    uri = entries[index][1]
+except (ValueError, IndexError):
+    sys.exit(0)
+
+subprocess.Popen(["xdg-open", uri])
