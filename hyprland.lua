@@ -13,6 +13,48 @@ local NORMAL_GAPS_IN  = 4
 local NORMAL_GAPS_OUT = 8
 
 
+-- local resizeMap = "h ↔ | j ⋈  | <span color='cyan' weight='bold'>k</span>  | lshrink width  i | inflate d deflate"
+-- local resizeMap = "h→← j  <span color='cyan' weight='bold'>k</span>   l←→  i   d "
+
+-- local resizeMap = "Resize - h🠞🠜 j  <span color='cyan' weight='bold'>k</span>   l 🠜🠞 i   d "
+
+local resizeMap = "resize "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>h</span>]→←" .. " "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>j</span>]"  .. " "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>k</span>]"  .. " "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>l</span>]←→" .. " "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>i</span>]"  .. " "
+resizeMap = resizeMap .. "[<span color='cyan' weight='bold'>d</span>]"
+
+
+-- set $move_mode [h]left [j]down [k]up [l]right [c]enter [r]esize
+-- set $mode_gaps Gaps: (o)uter, (i)nner 
+-- set $mode_gaps_outer Outer Gaps: +|-|0 (local), Shift + +|-|0 (global)
+-- set $mode_gaps_inner Inner Gaps: +|-|0 (local), Shift + +|-|0 (global)
+
+
+
+hl.bind("SUPER + R", hl.dsp.submap(resizeMap))
+
+hl.define_submap(resizeMap, function()
+	hl.bind("SHIFT + H", hl.dsp.window.resize({ x = -10, y =   0, relative = true }))
+	hl.bind("SHIFT + J", hl.dsp.window.resize({ x =   0, y = -10, relative = true }))
+    hl.bind("SHIFT + K", hl.dsp.window.resize({ x =   0, y =  10, relative = true }))
+	hl.bind("SHIFT + L", hl.dsp.window.resize({ x =  10, y =   0, relative = true }))
+	hl.bind("SHIFT + I", hl.dsp.window.resize({ x =  10, y =  10, relative = true }))
+	hl.bind("SHIFT + D", hl.dsp.window.resize({ x = -10, y = -10, relative = true }))
+
+	hl.bind( "h",        hl.dsp.window.resize({ x = -30, y =   0, relative = true }))
+	hl.bind( "j",        hl.dsp.window.resize({ x =   0, y = -30, relative = true }))
+    hl.bind( "k",        hl.dsp.window.resize({ x =   0, y =  30, relative = true }))
+	hl.bind( "l",        hl.dsp.window.resize({ x =  30, y =   0, relative = true }))
+	hl.bind( "i",        hl.dsp.window.resize({ x =  30, y =  30, relative = true }))
+	hl.bind( "d",        hl.dsp.window.resize({ x = -30, y = -30, relative = true }))
+
+    hl.bind("Escape", hl.dsp.submap("reset"))
+end)
+
+
 hl.config({
     input = {
         kb_layout = "us,br",
@@ -26,10 +68,68 @@ hl.config({
     },
 })
 
+-- hl.on("window.open", function(w)
+--     local ws = w.workspace
+--
+--     -- Temporary diagnostic: remove once it works
+--     hl.notification.create({
+--         text = "class=" .. tostring(w.class)
+--             .. " workspace=" .. tostring(ws and ws.name),
+--         timeout = 4000,
+--         icon = "ok",
+--     })
+--
+--     if w.class ~= "google-chrome" or not ws then return end
+--
+--     local workspace = ws.special and tostring(ws.name) or tostring(ws.id)
+--
+--     hl.workspace_rule({
+--         workspace = workspace,
+--         gaps_in = 0,
+--         gaps_out = 0,
+--     })
+--
+--     hl.exec_scheduled_prop_refresh_immediately()
+-- end)
+
+
+
+
+
+
+local laptop = "eDP-1"
+local projector = "HDMI-A-1"
+local mirrored = false
+
+hl.bind("SUPER + F8", function()
+    mirrored = not mirrored
+
+    if mirrored then
+        hl.monitor({
+            output = projector,
+            mode = "preferred",
+            position = "auto",
+            scale = 1,
+            mirror = laptop,
+        })
+    else
+        hl.monitor({
+            output = projector,
+            mode = "preferred",
+            position = "auto-right",
+            scale = 1,
+            mirror = "",
+        })
+    end
+end)
+
+
+
+
 
 
 hl.on("window.open", function(w)
-    if w.class == "google-chrome" then
+    if string.upper(w.class) == "GOOGLE-CHROME" then
         hl.workspace_rule({
             workspace = tostring(w.workspace.id),
             gaps_in = 0,
@@ -39,20 +139,8 @@ hl.on("window.open", function(w)
 end)
 
 
--- hl.on("window.open_early", function(w)
---     if w.class ~= "google-chrome" then return end
---
---     hl.workspace_rule({
---         workspace = tostring(w.workspace.id),
---         gaps_in = 0,
---         gaps_out = 0,
---     })
--- end)
---
-
-
 hl.on("window.close", function(w)
-    if w.class == "google-chrome" then
+    if string.upper(w.class) == "GOOGLE-CHROME" then
         hl.workspace_rule({
             workspace = tostring(w.workspace.id),
             gaps_in = NORMAL_GAPS_IN,
@@ -86,6 +174,30 @@ hl.bind("ALT + SHIFT + l",  hl.dsp.window.swap({ direction = "right" }))
 
 
 
+
+
+local gapsDisabled = {}
+
+hl.bind("SUPER + F12", function()
+    local ws = hl.get_active_workspace()
+    if not ws then return end
+
+    local id = tostring(ws.id)
+    gapsDisabled[id] = not gapsDisabled[id]
+
+    hl.workspace_rule({
+        workspace = id,
+        gaps_in = gapsDisabled[id] and 0 or NORMAL_GAPS_IN,
+        gaps_out = gapsDisabled[id] and 0 or NORMAL_GAPS_OUT,
+    })
+end)
+
+
+
+
+
+
+
 hl.bind("ALT + p", hl.dsp.exec_cmd(scripts_path .. "rofi-clip-history"))
 hl.bind("ALT + r", hl.dsp.exec_cmd(scripts_path .. "rofi-recent-files"))
 
@@ -111,8 +223,9 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("brightnessctl -n2 set 25%")
 	hl.exec_cmd("wl-clip-persist --clipboard regular")
     -- hl.exec_cmd("wl-paste --type text --watch cliphist store")
+	
 	-- hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/png' -t 'image/*' -t 'text/plain;charset=utf-8' -t 'text/*'")
-	hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/*' -t 'text/*'")
+	-- hl.exec_cmd("$HOME/.local/bin/cclipd -s 2 -t 'image/*' -t 'text/*'")
 end)
 
 
@@ -237,7 +350,7 @@ local closeWindowBind = hl.bind(mainMod .. " + F4", hl.dsp.window.close())
 -- hl.bind(mainMod .. " + SPACE", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + O", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + u", hl.dsp.layout("togglesplit"))    -- dwindle only
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
+hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 
 -- Switch workspaces with mainMod + [0-9]
