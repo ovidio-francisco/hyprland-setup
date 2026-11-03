@@ -1,12 +1,14 @@
 
-local NORMAL_GAPS_IN  = 4
-local NORMAL_GAPS_OUT = 8
+-- local NORMAL_GAPS_IN  = 4
+-- local NORMAL_GAPS_OUT = 8
 
+
+local config = require('config')
 
 hl.config({
     general = {
-        gaps_in  = NORMAL_GAPS_IN,
-        gaps_out = NORMAL_GAPS_OUT,
+        gaps_in  = config.NORMAL_GAPS_IN,
+        gaps_out = config.NORMAL_GAPS_OUT,
 	}
 })
 
@@ -24,8 +26,8 @@ hl.bind("SUPER + F12", function()
 
     hl.workspace_rule({
         workspace = id,
-        gaps_in = gapsDisabled[id] and 0 or NORMAL_GAPS_IN,
-        gaps_out = gapsDisabled[id] and 0 or NORMAL_GAPS_OUT,
+        gaps_in = gapsDisabled[id] and 0 or config.NORMAL_GAPS_IN,
+        gaps_out = gapsDisabled[id] and 0 or config.NORMAL_GAPS_OUT,
     })
 end)
 

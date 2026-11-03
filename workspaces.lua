@@ -5,12 +5,6 @@
 
 local config = require('config')
 
-hl.bind("SUPER + m", hl.dsp.focus({ direction = "left" }))
-hl.bind("SUPER + comma", hl.dsp.focus({ direction = "right" }))
-
-
-hl.bind("SUPER + N", hl.dsp.exec_cmd(config.scripts_path .. "goto-new-ws"))
-
 
 hl.config({
     binds = {
@@ -25,6 +19,7 @@ hl.config({
 
 local FLOAT_WIDTH = 1000
 local FLOAT_HEIGHT = 640
+
 
 hl.bind("SUPER + SPACE", function()
     local w = hl.get_active_window()
@@ -44,3 +39,4 @@ hl.bind("SUPER + SPACE", function()
 end)
 
 
+-- hl.bind("SUPER + SPACE", hl.dsp.window.float({ action = "toggle" }))

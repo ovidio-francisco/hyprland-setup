@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+clients=$(hyprctl clients -j)
+
+mapfile -t addresses < <(
+    jq -r 'sort_by(.focusHistoryID)[] | .address' <<< "$clients"
+)
+
+mapfile -t entries < <(
+    jq -r '
+        sort_by(.focusHistoryID)[]
+        | [
+            (.class // "?"),
+            (.title // "(untitled)" | gsub("[\r\n\t]"; " ")),
+            (.workspace.name // "?")
+          ]
+        | "\(.[0]) — \(.[1]) [\(.[2])]"
+    ' <<< "$clients"
+)
+
+((${#entries[@]})) || exit 0
+
+index=$(printf '%s\n' "${entries[@]}" |
+    rofi -dmenu -i -p "Windows" -theme ojf -format i)
+
+[[ "$index" =~ ^[0-9]+$ ]] || exit 0
+
+hyprctl dispatch "hl.dsp.focus({ window = 'address:${addresses[$index]}' })"
